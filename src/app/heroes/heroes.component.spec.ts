@@ -89,7 +89,7 @@ describe("HeroesComponent (TestBed - Deep)", () => {
         HEROES = [
             {id: 1, name: 'hero-name', strength:9},
         ]
-        mockHeroService = jasmine.createSpyObj(HeroService, ['getHeroes']);
+        mockHeroService = jasmine.createSpyObj(HeroService, ['getHeroes', 'deleteHero', 'addHero']);
         TestBed.configureTestingModule({
             declarations: [
                 HeroesComponent,
@@ -109,5 +109,34 @@ describe("HeroesComponent (TestBed - Deep)", () => {
         fixture.detectChanges();
         expect(fixture.debugElement.queryAll(By.css('li')).length).toBe(1);
         expect(fixture.debugElement.queryAll(By.directive(HeroComponent)).length).toBe(1);
-    })
+    });
+
+    it("should receive emit event from child", () => {
+        // spyOn(fixture.componentInstance, 'delete');
+        mockHeroService.getHeroes.and.returnValue(of(HEROES));
+        mockHeroService.deleteHero.and.returnValue(of(HEROES[0]));
+        fixture.detectChanges();
+        let heroComponents = fixture.debugElement.queryAll(By.directive(HeroComponent));
+        (<HeroComponent>heroComponents[0].componentInstance).delete.emit();
+
+        // we need to spyOn parent component to check if delete have been called.
+        // expect(fixture.componentInstance.delete).toHaveBeenCalledWith(HEROES[0]);
+        // or we can actually check if the hero has been deleted.
+        expect(fixture.componentInstance.heroes.length).toBe(0);
+    });
+
+    it("should add a new hero when add button is clicked", () => {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES));
+        mockHeroService.addHero.and.returnValue(of({id: 2, name: 'new-name', strength: 4}));
+        fixture.detectChanges();
+
+        let inputElement = fixture.debugElement.query(By.css('input')).nativeElement;
+        inputElement.value = 'new-name';
+        let addButton = fixture.debugElement.queryAll(By.css('button'))[0];
+        addButton.triggerEventHandler('click', null);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('li')).length).toBe(2);
+    });
+    
 })
