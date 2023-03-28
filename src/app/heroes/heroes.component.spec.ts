@@ -1,4 +1,4 @@
-import { Component, Input, NO_ERRORS_SCHEMA } from "@angular/core";
+import { Component, Directive, Input, NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { of } from "rxjs";
@@ -79,6 +79,21 @@ describe("HeroesComponent (TestBed)", () => {
 
 });
 
+
+@Directive({
+    selector: '[routerLink]',
+    host: { '(click)': 'onClick()' }
+})
+export class RouterLinkDirectiveStub {
+    @Input('routerLink') linkParams: any;
+    navigatedTo: any = null;
+
+    onClick() {
+        this.navigatedTo = this.linkParams;
+    }
+}
+
+
 // without mocking child component.
 describe("HeroesComponent (TestBed - Deep)", () => {
     let fixture: ComponentFixture<HeroesComponent>;
@@ -94,11 +109,12 @@ describe("HeroesComponent (TestBed - Deep)", () => {
             declarations: [
                 HeroesComponent,
                 HeroComponent,
+                RouterLinkDirectiveStub,
             ],
             providers: [
                 {provide: HeroService, useValue: mockHeroService},
             ],
-            "schemas": [NO_ERRORS_SCHEMA],
+            //"schemas": [NO_ERRORS_SCHEMA],
         });
         fixture = TestBed.createComponent(HeroesComponent);
         
@@ -137,6 +153,17 @@ describe("HeroesComponent (TestBed - Deep)", () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.queryAll(By.css('li')).length).toBe(2);
+    });
+
+    it("should have a correct route for first hero", () => {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES));
+        fixture.detectChanges();
+        let heroComponents = fixture.debugElement.queryAll(By.directive(HeroComponent));
+        let routerLink = heroComponents[0]
+            .query(By.directive(RouterLinkDirectiveStub))
+            .injector.get(RouterLinkDirectiveStub);
+        heroComponents[0].query(By.css('a')).triggerEventHandler('click', null);
+        expect(routerLink.navigatedTo).toBe('/detail/1'); 
     });
     
 })
