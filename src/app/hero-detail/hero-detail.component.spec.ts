@@ -1,5 +1,5 @@
 import { Location } from "@angular/common";
-import { ComponentFixture, TestBed } from "@angular/core/testing"
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from "@angular/core/testing"
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute } from "@angular/router";
@@ -32,12 +32,25 @@ describe("HeroDetailComponent", () => {
             ]
         });
         fixture = TestBed.createComponent(HeroDetailComponent);
-    })
+    });
 
     it("should load correct hero detail when initialized", () => {
         mockHeroService.getHero.and.returnValue(of({id: 2, name: 'hero-name', strength: 3}));
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('h2')).nativeElement.textContent).toContain('HERO-NAME');
         expect(mockHeroService.getHero).toHaveBeenCalledWith(2);
-    })
+    });
+
+    it("should call updateHero when save is called using tick/flush", fakeAsync(() => {
+        mockHeroService.getHero.and.returnValue(of({id: 2, name:'hero-name', strength: 3}));
+        mockHeroService.updateHero.and.returnValue(of({}));
+        fixture.detectChanges();
+
+        fixture.componentInstance.save();
+        // tick(250);
+        flush();
+
+        expect(mockHeroService.updateHero).toHaveBeenCalled();
+    }));
+
 })
